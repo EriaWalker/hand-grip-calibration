@@ -1,0 +1,4 @@
+interface:
+  display_name: "Roach 手部握姿校准"
+  short_description: "Roach character hand grip calibration"
+  default_prompt: "使用 $roach-hand-grip-calibration 检查当前武器的实际手部绑定，依据骨骼与蒙皮校准握姿并验证重新装备结果。"

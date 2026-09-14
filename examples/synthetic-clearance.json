@@ -1,0 +1,9 @@
+{
+  "coordinate_space": "weapon-meters-xyzw",
+  "description": "Synthetic quad outside a cube. No project mesh data.",
+  "vertices": [[0.012,-0.005,-0.005],[0.012,0.005,-0.005],[0.012,0.005,0.005],[0.012,-0.005,0.005]],
+  "triangles": [[0,1,2],[0,2,3]],
+  "colliders": [{"planes": [[1,0,0,-0.01],[-1,0,0,-0.01],[0,1,0,-0.01],[0,-1,0,-0.01],[0,0,1,-0.01],[0,0,-1,-0.01]]}],
+  "expected_clearance_mm": 2.0,
+  "expected_samples": 6
+}

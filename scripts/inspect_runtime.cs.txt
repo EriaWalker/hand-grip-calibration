@@ -1,0 +1,37 @@
+// Read-only Unity MCP execute_code method body. Set the explicitly targeted root.
+const string characterName = "Rifle_Full_Body";
+var root = GameObject.Find(characterName);
+if (root == null) return "Target root not found: " + characterName;
+var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
+var output = new System.Collections.Generic.List<string>();
+output.Add("scene=" + root.scene.path + "; playing=" + Application.isPlaying + "; frame=" + Time.frameCount + "; background=" + Application.runInBackground);
+foreach (var entity in root.GetComponentsInChildren<MonoBehaviour>(true).Where(c => c != null && c.GetType().Name == "FPSAnimatorEntity" && c.gameObject.activeInHierarchy))
+{
+    var field = entity.GetType().GetField("animatorProfile", flags);
+    var profile = field == null ? null : field.GetValue(entity) as UnityEngine.Object;
+    output.Add("active entity=" + entity.gameObject.name + "; profile=" + AssetDatabase.GetAssetPath(profile));
+}
+var controller = root.GetComponents<MonoBehaviour>().FirstOrDefault(c => c != null && c.GetType().Name == "FPSBoneController");
+if (controller == null) return string.Join("\n", output) + "\nNo FPSBoneController";
+var type = controller.GetType();
+var activeField = type.GetField("_activeProfile", flags);
+if (activeField != null) output.Add("controller profile=" + AssetDatabase.GetAssetPath(activeField.GetValue(controller) as UnityEngine.Object));
+var layersField = type.GetField("_animationLayers", flags);
+var layers = layersField == null ? null : layersField.GetValue(controller) as System.Collections.IEnumerable;
+if (layers == null) return string.Join("\n", output) + "\nNo initialized layers; inspect current source/editor state";
+foreach (var layer in layers)
+{
+    var jobField = layer.GetType().GetField("job", flags);
+    var job = jobField == null ? null : jobField.GetValue(layer);
+    if (job == null || job.GetType().Name != "AttachHandLayerJob") continue;
+    var settingMethod = job.GetType().GetMethod("GetSettingAsset", flags);
+    var setting = settingMethod == null ? null : settingMethod.Invoke(job, null) as UnityEngine.Object;
+    if (setting == null) { output.Add("Attach Hand has no readable setting"); continue; }
+    output.Add("ACTUAL Attach Hand=" + AssetDatabase.GetAssetPath(setting));
+    var weightMethod = type.GetMethod("GetLayerWeight", flags);
+    if (weightMethod != null) output.Add("weight=" + weightMethod.Invoke(controller, new object[] { setting }));
+    var poseField = job.GetType().GetField("_handPose", flags);
+    if (poseField != null) output.Add("cached=" + JsonUtility.ToJson(poseField.GetValue(job)));
+    output.Add("settings=" + EditorJsonUtility.ToJson(setting));
+}
+return string.Join("\n", output);
