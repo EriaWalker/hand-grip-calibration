@@ -1,6 +1,13 @@
 # 枪械握姿动画复用修正SKILL
 # Hand Grip Calibration
 
+一句话介绍：
+该SKILL脚本可以解决枪械握持动画复用中存在的穿模问题。尽管Humanoid 能复用动作，但不会自动让不同大小的手掌和手指贴合枪身，这常常会导致手指错位，需要繁琐的调参。该SKILL脚本可以自动化完成该工作。
+
+测试环境: GPT-astra 12个模型动画复用导致的手部握持穿模问题均显著改善
+
+依赖：KINEMATION FPS Animation Framework 插件
+
 [中文](#中文) · [English](#english)
 
 > [!IMPORTANT]
