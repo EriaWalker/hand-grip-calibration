@@ -44,6 +44,8 @@ uv run .agents/skills/roach-hand-grip-calibration/scripts/calibrate.py verify --
 
 **附件能够替换 Profile 默认的同类型层配置。** 实际 job 使用握把自己的 settings 时，修改该资源，而非已被替换的默认层。
 
+批量修复时先列出“武器 × 实际握把 × 手侧”，区分握把覆盖与不改变手部设置的配件。当前实现按设置类型替换所有匹配层；增加右手 Attach Hand 前先查是否会被左手附件一起覆盖。双手分工、动作权重与单手武器配置见 [运行时检查](references/unity-workflow.md#左右手层分工与动作权重)。
+
 ### 2. 区分绑定错误与接触误差
 
 先排除错误资产、错误索引、零权重、未更新的帧、未重新采样和缺失手指链。这些不能靠增加 Offset 补救。
@@ -57,6 +59,7 @@ uv run .agents/skills/roach-hand-grip-calibration/scripts/calibrate.py verify --
 - 机器人：独立副本依次采样对应基础姿势、附件 custom pose，再应用原附件偏移。
 - 目标角色：记录当前骨骼和**可见的那套蒙皮**；导出 bindposes、boneWeights、骨骼矩阵、顶点及三角形。
 - 统一到同一武器坐标系，单位米、四元数 x,y,z,w；核对父级缩放和矩阵定义。
+- 将 Pose Sampler 的武器偏移计入参考姿态；检查 BakeMesh 与后续变换是否重复应用缩放。读 [快照坐标与缩放](references/calculation.md#快照坐标与缩放) 后再处理异常大的拟合结果。
 - 按骨骼语义建立对应点，不按两张网格顶点编号配对。按类别均衡取样，避免高密度网格支配拟合。
 - 记录资产、姿态、附件、导出帧与筛选规则。状态改变后重导，不能混用不同动作的网格和武器变换。
 
@@ -75,6 +78,7 @@ uv run .agents/skills/roach-hand-grip-calibration/scripts/calibrate.py verify --
 - 手部链按需包含手腕和各节手指，逐项核对 name/index，不能只核对总数。
 - 更改 pose 引用或曲线后重新链接该层，或原生切走再切回武器。只改每帧读取的 Offset 通常无需重新采样，仍以源码为准。
 - 使用 Undo、精确资源保存和并发变更检查；失败只恢复本次修改。
+- 按武器的预期基础姿势同步 Profile 默认层与对应附件层的 pose 和 Offset；不可假定每把武器的 `Left0` 都表示同一种握把。
 
 ### 6. 以运行结果收尾
 
@@ -83,6 +87,8 @@ uv run .agents/skills/roach-hand-grip-calibration/scripts/calibrate.py verify --
 3. 检查相关角度的真实渲染，保留数值证据与截图。用几何计算修正，以截图发现明显异常；尊重用户要求的手动微调方式。
 4. 原生切到另一件装备再切回，验证 settings、缓存和接触不漂移；保存后核对磁盘资源。未验证的动作/附件明确列出。
 5. 区分静态、Play Mode、Player Build 证据。顶点和三角形中心对凸包的检查是**有限采样的保守估计**，不证明全部三角形或所有动作完全无穿模。
+
+双手包握还要检查同帧两手表面相交，方法与距离定义见 [双手联合检查](references/calculation.md#双手联合检查)。分别验证瞄准、换弹释放及恢复、单手武器攻击；禁用左手 IK 的武器不以左手到未使用目标的误差判失败。
 
 不停止用户或其他任务拥有的 Play Mode。临时修改后台运行/输入策略后恢复原值；退出本任务启动的 Play Mode。清理临时对象，不向 Assets 写调试脚本引发无关编译。
 
@@ -98,6 +104,8 @@ uv run .agents/skills/roach-hand-grip-calibration/scripts/calibrate.py verify --
 ## 案例与回归
 
 [AK12 案例](references/ak12-case.md) 记录历史配置与验证范围。公开版不包含角色或武器的网格回归数据。
+
+[全武器案例](references/all-weapons-case.md) 记录 5 件装备、14 个手部案例的新增经验。处理多附件、右手校正、双手相交或匕首单手握持时读取；案例数值不是可直接安装的握姿预设。
 
 [合成样本](examples/synthetic-clearance.json) 用立方体和面片检验接触计算。[对应点样本](examples/landmarks.json) 可用于拟合与 Offset 命令。这些样本不代表当前 Unity 场景状态。
 

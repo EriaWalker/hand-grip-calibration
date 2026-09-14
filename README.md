@@ -59,6 +59,17 @@ Unity 侧需要 KINEMATION FPS Animation Framework，以及你有权使用的角
 仓库内的合成测试验证计算逻辑。
 它不复现这次完整 Unity 任务，也不证明当前场景已经通过验收。
 
+### 全武器校准新增经验
+
+后续项目校准覆盖 Knife、Mk18、AK12、Mk23 和 FAL。经验已加入技能主流程与参考文档：
+
+- 检查同类型层覆盖，避免左手附件替换右手配置。
+- 核对 Pose Sampler 武器偏移及蒙皮缩放，避免计算假位移。
+- 对双手握持执行同帧表面检查，并验证换弹释放与恢复。
+- 对仅右手握持的匕首关闭左手 IK。
+
+当前服装下的 14 个历史握姿采样检查通过；这不表示全部动作帧或其他服装无穿模。详细结果和限制见 [全武器案例](references/all-weapons-case.md)。这些案例与上表的 12 个绑定点位记录分别计数。
+
 ### 安装
 
 在目标 Unity 项目根目录执行以下命令。
@@ -166,6 +177,17 @@ Elapsed time depends on the model, binding locations, tool response times, and v
 
 The synthetic tests check the calculations.
 They do not reproduce the full Unity task or prove that a current scene passes validation.
+
+### Lessons from the full weapon pass
+
+A later project pass covered Knife, Mk18, AK12, Mk23, and FAL. The skill now includes these checks:
+
+- Check replacement by setting type so a left-hand attachment cannot replace the right-hand setup.
+- Account for Pose Sampler weapon offsets and skin scale before accepting a calculated displacement.
+- Check both hand surfaces in the same frame, plus hand release and recovery during reload.
+- Disable left-hand IK for a knife held only in the right hand.
+
+All 14 historical grip sampling cases passed for the tested outfit. This does not prove that other outfits or every animation frame have no intersections. See the [full weapon case](references/all-weapons-case.md) for results and limits. These cases are counted separately from the 12 binding locations in the earlier table.
 
 ### Install
 

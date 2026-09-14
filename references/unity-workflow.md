@@ -23,6 +23,25 @@
 
 可以在已经授权的验证期间短暂允许后台运行；事先保存原值，完成后恢复。输入策略仅在验证真实输入需要时修改，并单独恢复；不要默认改变项目 Player Settings。
 
+## 左右手层分工与动作权重
+
+先核对当前 `FPSBoneController.LinkAnimatorLayer`。全武器案例的实现遍历全部层，以 `GetSettingAsset().GetType()` 匹配新设置，并对每个匹配层执行链接；不按左右手或资源名区分。因此两个 Attach Hand 层会同时收到左手握把设置。不能仅新增第二层再改 Hand Bone，就认为两手已隔离。
+
+本案例保留左手 Attach Hand，在每把武器的 Profile 中于最终 IK 之前添加独立原生 Pose Offset 层，修正 `IK RightHand` 和 15 节右手指骨。使用 `ParentBoneSpace`、`Add`，手指位移为零；先读取当前局部姿势，再求增量：
+
+```text
+positionDelta = desiredLocalPosition - currentLocalPosition
+rotationDelta = inverse(currentLocalRotation) * desiredLocalRotation
+```
+
+这是本案例层组合下的做法，不能将 Attach Hand 的武器空间 Offset 直接填入右手父骨骼空间。检查是否已有其他 Pose Offset 附件覆盖，再决定是否适用；不默认添加第二套运行 IK 求解器。
+
+4 把枪的右手层采用全层 `curveBlending`，通过 Playables 的反向 `MaskAttachHand` 曲线在换弹时释放，结束后恢复。需要验证动作中的实际有效权重，而非只看静止握姿。当前 Pose Offset job 不读取单项 `blend` 和 `keepChildrenPose`，Attach Hand job 不读取 `overridePoseWeight`；升级插件后重新核对实现，不照字段名推断行为。
+
+用户要求仅右手握持的 Knife 使用 `rightHandWeight=1`、`leftHandWeight=0`，且没有左手 Attach Hand 层。其攻击资产不提供上述释放曲线，右手校正保持有效，左臂继续原生动画。左手远离已禁用的 IK 目标是允许的，不应为消除诊断误差重新开启约束。
+
+批量修改记录实际附件映射：Profile 默认姿势、无握把、垂直握把、斜握把的索引可因武器而异。同步对应默认层和附件层的 `customHandPose` 与 `handPoseOffset`。没有手部覆盖的枪口或瞄准配件应检查切换后引用不变，不必复制握姿；逐选项通过也不代表穷举了所有配件组合。
+
 ## 备份与隔离
 
 分别保存内存 `EditorJsonUtility.ToJson`、磁盘资源副本及 SHA-256。Disk 可能仍是机器人原值，Inspector 已被用户归零；恢复时明确要恢复哪一份。
@@ -56,3 +75,7 @@
 截图工具有时即使 include_image=false 仍返回 image 内容块。不要 `text(result)` 输出整个 Base64；只转发文本/structuredContent，需查看时用 image(block) 或本地 view_image。
 
 报告本次新增错误与已有 Console 错误的区别。AK12 案例已有 UnityEditor.Graphs.Edge.WakeUp 异常，不能写成“Console 零错误”。若另一个任务正在编译/Play Mode，不停止它来制作方便的验证环境。
+
+全武器校准早期直接通过工具改变附件时出现过 `AttachHandLayer.LeftHandPose` NativeArray 访问限制异常。后续在本任务拥有的 Play Mode 中采用暂停、调用原生切换、恢复并等待帧推进后采样，未再观察到同类异常。这是已观察的验证时序，不是对插件并发根因的完整证明；不要在 Animation Job 执行期间通过反射改写其缓存数组。保留异常及发生阶段，不能清空 Console 后宣称全程无错误。
+
+将静态绑定审查、运行接触快照、原生动作流程、真实输入与 Player Build 分别报告。动作流程通过不证明每帧接触安全。归档应包含资源哈希、帧号、蒙皮名称、采样和筛选规则、阈值、失败与最终结果；仅存 Temp 不能保证长期复现。公开技能包只收录经验和获准发布的材料，项目原始蒙皮、武器数据与完整运行日志保留在项目证据目录。
