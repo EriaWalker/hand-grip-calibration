@@ -1,4 +1,4 @@
-# 枪械握姿动画复用矫正脚本
+# 枪械握姿动画复用修正SKILL
 # Hand Grip Calibration
 
 [中文](#中文) · [English](#english)
