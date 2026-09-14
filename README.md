@@ -1,4 +1,5 @@
-# Roach Hand Grip Calibration
+# 枪械握姿动画复用矫正脚本
+# Hand Grip Calibration
 
 [中文](#中文) · [English](#english)
 
